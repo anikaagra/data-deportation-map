@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICE Deportations 2003–2024 | United States</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fff3ef;
+  --surface: #fffaf8;
+  --ink: #303032;
+  --ink-muted: #6b6b6b;
+  --border: #b0b0b0;
+  --accent: #75b24b;
+  --accent2: #5a8a38;
+  --gold: #d4a820;
+  --warm: #f0e8e4;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Syne', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+header {
+  padding: 36px 48px 28px;
+  border-bottom: 2px solid var(--ink);
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+
+header::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 420px; height: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent, transparent 8px,
+    rgba(117,178,75,0.06) 8px, rgba(117,178,75,0.06) 9px
+  );
+  pointer-events: none;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.header-left {}
+
+.eyebrow {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(26px, 3.5vw, 48px);
+  font-weight: 900;
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+h1 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.header-right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.total-figure {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(36px, 5vw, 72px);
+  font-weight: 900;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.total-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-top: 4px;
+}
+
+.subtitle {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--ink-muted);
+  max-width: 560px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.authors {
+  display: flex;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.author-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+}
+
+/* ── MAIN LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 300px;
+  flex-shrink: 0;
+  background: #303032;
+  border-right: 2px solid #4a4a4c;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  --ink: #fff3ef;
+  --ink-muted: #9a9a9c;
+  --border: #4a4a4c;
+  --warm: #484848;
+  --surface: #3a3a3c;
+}
+
+.sidebar-section {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 14px;
+}
+
+/* Top states list */
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.15s;
+}
+
+.state-row:hover { opacity: 0.7; }
+
+.state-rank {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-muted);
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.state-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  width: 95px;
+  flex-shrink: 0;
+}
+
+.state-bar-track {
+  flex: 1;
+  height: 5px;
+  background: var(--warm);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.state-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 1px;
+}
+
+.state-val {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-muted);
+  width: 52px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Layer toggles */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.toggle-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.color-swatch {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.toggle {
+  position: relative;
+  width: 36px; height: 20px;
+  cursor: pointer;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.toggle input:checked ~ .toggle-track { background: var(--accent); }
+
+.toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+
+.toggle input:checked ~ .toggle-thumb { transform: translateX(16px); }
+
+/* Turning point legend */
+.pin-legend-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.pin-icon-sm {
+  width: 20px; height: 20px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.pin-info { font-size: 11px; color: var(--ink); line-height: 1.4; }
+.pin-info strong { display: block; font-weight: 600; font-size: 11px; }
+.pin-info span { color: var(--ink-muted); font-family: 'IBM Plex Mono', monospace; font-size: 10px; }
+
+/* Scrollbar */
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-track { background: var(--surface); }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* ── MAP STAT OVERLAY ── */
+.map-stat {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 999;
+  background: #303032;
+  padding: 14px 20px;
+}
+
+.map-stat-figure {
+  font-family: 'Playfair Display', serif;
+  font-size: 52px;
+  font-weight: 900;
+  color: #fff3ef;
+  line-height: 1;
+}
+
+.map-stat-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #9a9a9c;
+  margin-top: 5px;
+}
+
+/* ── MAP ── */
+.map-wrap {
+  flex: 1;
+  position: relative;
+  background: #f0e8e4;
+}
+
+#map {
+  width: 100%; height: 100%;
+}
+
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-container { background: #f0e8e4 !important; }
+
+.leaflet-tile { filter: sepia(0.3) saturate(0.35) brightness(1.05) !important; }
+
+.leaflet-popup-content-wrapper {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--accent);
+  font-family: 'Syne', sans-serif;
+  padding: 0;
+}
+
+.leaflet-popup-content { margin: 0; width: auto !important; }
+
+.leaflet-popup-tip-container { display: none; }
+
+.leaflet-popup-close-button {
+  color: var(--ink) !important;
+  font-size: 18px !important;
+  top: 8px !important;
+  right: 10px !important;
+}
+
+/* Custom popup content */
+.popup-body {
+  padding: 16px 20px 14px;
+  min-width: 240px;
+  max-width: 300px;
+}
+
+.popup-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+.popup-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.popup-stat {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  margin-bottom: 5px;
+  gap: 12px;
+}
+
+.popup-stat-key {
+  color: var(--ink-muted);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+}
+
+.popup-stat-val {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--ink);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.popup-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 10px 0;
+}
+
+.popup-note {
+  font-size: 11px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+/* Turning point popup */
+.popup-event-tag {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+/* ── MAP LEGEND ── */
+.map-legend {
+  position: absolute;
+  bottom: 24px;
+  right: 16px;
+  z-index: 999;
+  background: var(--surface);
+  border: 1.5px solid var(--ink);
+  padding: 14px 16px;
+  box-shadow: 3px 3px 0 var(--accent);
+  min-width: 180px;
+}
+
+.legend-title {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 10px;
+}
+
+.legend-scale {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 12px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+}
+
+.legend-scale div {
+  flex: 1; height: 100%;
+}
+
+.legend-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-muted);
+  margin-bottom: 12px;
+}
+
+.legend-bubble-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.legend-bubble {
+  border-radius: 50%;
+  background: rgba(90,138,56,0.15);
+  border: 1.5px solid var(--accent2);
+  flex-shrink: 0;
+}
+
+.legend-bubble-text {
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.legend-bubble-text small {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  color: var(--ink-muted);
+}
+
+/* ── FOOTER ── */
+footer {
+  padding: 12px 48px;
+  background: #303032;
+  color: rgba(255,255,255,0.4);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+footer span { color: rgba(255,255,255,0.65); }
+</style>
+</head>
+<body>
+
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-section">
+      <div class="section-label">Map Layers</div>
+      <div class="toggle-row">
+        <span class="toggle-label">
+          <span class="color-swatch" style="background:var(--accent)"></span>
+          Deportation Volume
+        </span>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-bubbles" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">
+          <span class="color-swatch" style="background:var(--gold)"></span>
+          Turning Points
+        </span>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-pins" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Top States by Removals</div>
+      <!-- Filled by JS -->
+      <div id="state-list"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="section-label">Turning Point Pins</div>
+      <div class="pin-legend-row">
+        <div class="pin-icon-sm" style="background:#e07034"></div>
+        <div class="pin-info"><strong>Enforcement Expansion</strong><span>Policy broadens ICE authority</span></div>
+      </div>
+      <div class="pin-legend-row">
+        <div class="pin-icon-sm" style="background:#5aaad4"></div>
+        <div class="pin-info"><strong>Restriction / Reform</strong><span>Limiting enforcement scope</span></div>
+      </div>
+      <div class="pin-legend-row">
+        <div class="pin-icon-sm" style="background:#d4a820"></div>
+        <div class="pin-info"><strong>Flashpoint</strong><span>Humanitarian or legal crisis</span></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1">
+      <div class="section-label">Context</div>
+      <p style="font-size:11px;color:var(--ink-muted);line-height:1.6;">
+        Texas alone accounts for <strong style="color:var(--ink)">48%</strong> of all U.S. deportations, mainly due to its 1,200-mile border shared with Mexico. Following with a large gap, California and Arizona reflect the southwestern enforcement corridor. Interior states like Illinois and New York show the reach of Secure Communities (2008–2014) and later 287(g) agreements, which expanded federal immigration enforcement into local communities.
+      </p>
+      <p style="font-size:11px;color:var(--ink-muted);line-height:1.6;margin-top:10px;">
+        Data: TRAC Immigration / DHS Yearbook of Immigration Statistics. Hover any circle or pin for details.
+      </p>
+    </div>
+
+  </aside>
+
+  <!-- MAP -->
+  <div class="map-wrap">
+    <div id="map"></div>
+
+    <!-- Stat overlay -->
+    <div class="map-stat">
+      <div class="map-stat-figure">5.47M</div>
+      <div class="map-stat-label">Total Deportations</div>
+    </div>
+
+    <!-- Legend -->
+    <div class="map-legend">
+      <div class="legend-title">Deportation Intensity</div>
+      <div class="legend-scale">
+        <div style="background:#c8e8a0"></div>
+        <div style="background:#9acc70"></div>
+        <div style="background:#75b24b"></div>
+        <div style="background:#4a8a28"></div>
+        <div style="background:#2a5810"></div>
+      </div>
+      <div class="legend-scale-labels">
+        <span>Low</span><span>High</span>
+      </div>
+      <div class="legend-bubble-row">
+        <div class="legend-bubble" style="width:28px;height:28px"></div>
+        <div class="legend-bubble-text">Volume circle<small>Size = # deportations</small></div>
+      </div>
+      <div class="legend-bubble-row">
+        <div style="width:14px;height:14px;background:var(--gold);border-radius:50% 50% 50% 0;transform:rotate(-45deg);flex-shrink:0"></div>
+        <div class="legend-bubble-text">Turning point<small>Click for context</small></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  SOURCE: <span>TRAC Immigration Reports (tracreports.org)</span> &nbsp;·&nbsp;
+  <span>DHS Yearbook of Immigration Statistics</span> &nbsp;·&nbsp;
+  <span>ICE.gov ERO Annual Reports</span> &nbsp;·&nbsp;
+  DATA RANGE: <span>FY 2003 – FY 2024</span>
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// RAW DATA from TRAC (your provided numbers)
+// ─────────────────────────────────────────────────────────────────────────────
+const stateData = [
+  { state: "Texas",               abbr: "TX", count: 2649856, lat: 31.0,   lng: -100.0  },
+  { state: "California",          abbr: "CA", count: 904963,  lat: 36.7,   lng: -119.4  },
+  { state: "Arizona",             abbr: "AZ", count: 901726,  lat: 34.0,   lng: -111.9  },
+  { state: "Louisiana",           abbr: "LA", count: 401010,  lat: 31.0,   lng: -91.8   },
+  { state: "Florida",             abbr: "FL", count: 169338,  lat: 27.8,   lng: -81.6   },
+  { state: "Georgia",             abbr: "GA", count: 116562,  lat: 32.2,   lng: -83.4   },
+  { state: "New York",            abbr: "NY", count: 116228,  lat: 42.7,   lng: -74.2   },
+  { state: "New Jersey",          abbr: "NJ", count: 34038,   lat: 40.1,   lng: -74.5   },
+  { state: "Illinois",            abbr: "IL", count: 28129,   lat: 40.0,   lng: -89.2   },
+  { state: "D.C.",                abbr: "DC", count: 26984,   lat: 38.91,  lng: -77.04  },
+  { state: "Michigan",            abbr: "MI", count: 15696,   lat: 44.3,   lng: -85.4   },
+  { state: "Puerto Rico",         abbr: "PR", count: 13844,   lat: 18.22,  lng: -66.59  },
+  { state: "New Mexico",          abbr: "NM", count: 11635,   lat: 34.3,   lng: -106.0  },
+  { state: "Massachusetts",       abbr: "MA", count: 10163,   lat: 42.3,   lng: -71.8   },
+  { state: "Washington",          abbr: "WA", count: 9114,    lat: 47.4,   lng: -120.5  },
+  { state: "Pennsylvania",        abbr: "PA", count: 5778,    lat: 40.9,   lng: -77.8   },
+  { state: "Minnesota",           abbr: "MN", count: 3150,    lat: 46.4,   lng: -93.1   },
+  { state: "Hawaii",              abbr: "HI", count: 2899,    lat: 20.5,   lng: -157.5  },
+  { state: "North Carolina",      abbr: "NC", count: 2809,    lat: 35.5,   lng: -79.4   },
+  { state: "Colorado",            abbr: "CO", count: 2742,    lat: 38.9,   lng: -105.5  },
+  { state: "Nevada",              abbr: "NV", count: 2312,    lat: 39.3,   lng: -116.6  },
+  { state: "Maryland",            abbr: "MD", count: 2193,    lat: 39.0,   lng: -76.8   },
+  { state: "Connecticut",         abbr: "CT", count: 2164,    lat: 41.6,   lng: -72.7   },
+  { state: "North Dakota",        abbr: "ND", count: 1538,    lat: 47.5,   lng: -100.4  },
+  { state: "Ohio",                abbr: "OH", count: 1513,    lat: 40.4,   lng: -82.8   },
+  { state: "Oregon",              abbr: "OR", count: 1414,    lat: 44.1,   lng: -120.5  },
+  { state: "Maine",               abbr: "ME", count: 1009,    lat: 45.4,   lng: -69.0   },
+  { state: "Utah",                abbr: "UT", count: 995,     lat: 39.3,   lng: -111.1  },
+  { state: "Alaska",              abbr: "AK", count: 976,     lat: 64.2,   lng: -153.0  },
+  { state: "Vermont",             abbr: "VT", count: 965,     lat: 44.0,   lng: -72.7   },
+  { state: "Montana",             abbr: "MT", count: 865,     lat: 47.0,   lng: -110.0  },
+  { state: "Kentucky",            abbr: "KY", count: 655,     lat: 37.5,   lng: -85.3   },
+  { state: "Missouri",            abbr: "MO", count: 468,     lat: 38.5,   lng: -92.5   },
+  { state: "Tennessee",           abbr: "TN", count: 440,     lat: 35.9,   lng: -86.3   },
+  { state: "Oklahoma",            abbr: "OK", count: 354,     lat: 35.5,   lng: -97.5   },
+  { state: "Nebraska",            abbr: "NE", count: 253,     lat: 41.5,   lng: -99.9   },
+  { state: "Rhode Island",        abbr: "RI", count: 196,     lat: 41.7,   lng: -71.5   },
+  { state: "Virginia",            abbr: "VA", count: 196,     lat: 37.8,   lng: -78.2   },
+  { state: "South Carolina",      abbr: "SC", count: 194,     lat: 33.9,   lng: -80.9   },
+  { state: "Indiana",             abbr: "IN", count: 128,     lat: 40.3,   lng: -86.1   },
+  { state: "Idaho",               abbr: "ID", count: 111,     lat: 44.4,   lng: -114.6  },
+  { state: "Mississippi",         abbr: "MS", count: 107,     lat: 32.7,   lng: -89.7   },
+  { state: "New Hampshire",       abbr: "NH", count: 98,      lat: 43.7,   lng: -71.6   },
+  { state: "Wisconsin",           abbr: "WI", count: 30,      lat: 44.5,   lng: -90.0   },
+  { state: "Alabama",             abbr: "AL", count: 25,      lat: 32.8,   lng: -86.8   },
+  { state: "Iowa",                abbr: "IA", count: 22,      lat: 42.0,   lng: -93.5   },
+  { state: "Delaware",            abbr: "DE", count: 12,      lat: 39.0,   lng: -75.5   },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TURNING POINT PINS
+// ─────────────────────────────────────────────────────────────────────────────
+const turningPoints = [
+  {
+    lat: 31.76, lng: -106.49,
+    year: "2006", type: "expand",
+    title: "Secure Border Initiative",
+    location: "El Paso, TX",
+    body: "DHS launches SBInet, a $2.5B virtual fence program along the U.S.-Mexico border combining surveillance towers, sensors, and drones. Due to criticism over cost overruns, the program was cancelled in 2011.",
+    admin: "Bush"
+  },
+  {
+    lat: 33.45, lng: -112.07,
+    year: "2010", type: "expand",
+    title: "Arizona SB 1070",
+    location: "Phoenix, AZ",
+    body: "Arizona passes the nation's strictest immigration enforcement law, requiring police to check immigration status during stops. This triggers national debate over racial profiling; key provisions blocked by the Supreme Court in 2012.",
+    admin: "Obama"
+  },
+  {
+    lat: 38.91, lng: -77.04,
+    year: "2012", type: "restrict",
+    title: "DACA Announced",
+    location: "Washington, D.C.",
+    body: "President Obama announces Deferred Action for Childhood Arrivals (DACA), shielding ~800,000 undocumented immigrants who arrived as children from deportation. The same year, there was a peak in deportation (409K).",
+    admin: "Obama"
+  },
+  {
+    lat: 29.76, lng: -95.37,
+    year: "2014", type: "crisis",
+    title: "Unaccompanied Children Crisis",
+    location: "Houston, TX",
+    body: "Record 68,000 unaccompanied minors were apprehended at the border, creating an overwhelming processing issue. Obama declares a humanitarian crisis. Congress approves $3.7B in emergency funding to address the situation.",
+    admin: "Obama"
+  },
+  {
+    lat: 41.88, lng: -87.63,
+    year: "2017", type: "expand",
+    title: "Sanctuary City Crackdown",
+    location: "Chicago, IL",
+    body: "Trump DOJ threatens to withhold federal grants from sanctuary cities. Chicago, New York, and LA sue. Interior arrests surge 40% nationwide as ICE begins targeting previously low-priority individuals.",
+    admin: "Trump I"
+  },
+  {
+    lat: 32.72, lng: -117.16,
+    year: "2018", type: "crisis",
+    title: "Zero Tolerance / Family Separation",
+    location: "San Diego, CA",
+    body: "AG Sessions announces policy where all adults crossing illegally would be criminally prosecuted and children would be separated. Over 2,800 children were separated before public outcry forced partial reversal in June 2018.",
+    admin: "Trump I"
+  },
+  {
+    lat: 26.0, lng: -97.5,
+    year: "2019", type: "expand",
+    title: "Remain in Mexico (MPP)",
+    location: "Rio Grande Valley, TX",
+    body: "Migrant Protection Protocols force asylum seekers to wait in Mexico during proceedings. 70,000+ migrants were forced to wait in dangerous border towns. This was ended by Biden in 2021, briefly reinstated, and finally terminated.",
+    admin: "Trump I"
+  },
+  {
+    lat: 32.22, lng: -110.93,
+    year: "2020", type: "expand",
+    title: "Title 42 Invoked",
+    location: "Tucson, AZ",
+    body: "CDC invokes Title 42 public health authority to expel migrants without asylum hearings, citing COVID-19 as the reason. Pushed for underlying historically racist reasons, this was used to expel 2.5 million people through 2023. Critics call it deportation without due process.",
+    admin: "Trump I"
+  },
+  {
+    lat: 29.95, lng: -90.07,
+    year: "2021", type: "crisis",
+    title: "Haitian Deportation Flights",
+    location: "New Orleans, LA",
+    body: "After 15,000+ Haitian migrants cross the border under the Del Rio bridge, the Biden administration rapidly deports thousands to Haiti. Disturbing images of Border Patrol on horseback spark a national outcry and diplomatic fallout.",
+    admin: "Biden"
+  },
+  {
+    lat: 28.71, lng: -100.50,
+    year: "2023", type: "crisis",
+    title: "Eagle Pass Surge",
+    location: "Eagle Pass, TX",
+    body: "Eagle Pass becomes the epicenter of the largest border crossing surge in U.S. history. Over 12,600 encounters occurred in a single day in December 2023. Texas deploys the National Guard; A state-federal legal battle begins over razor wire.",
+    admin: "Biden"
+  },
+  {
+    lat: 34.05, lng: -118.24,
+    year: "2017", type: "expand",
+    title: "Courthouse Arrests Begin",
+    location: "Los Angeles, CA",
+    body: "ICE begins arresting immigrants at courthouses nationwide, previously avoided to preserve judicial integrity. California passes the TRUTH Act in response, requiring consent forms before ICE interviews. Courthouse arrests increase 1,700% by 2019.",
+    admin: "Trump I"
+  },
+  {
+    lat: 39.73, lng: -104.83,
+    year: "2025", type: "expand",
+    title: "Operation Aurora",
+    location: "Aurora, CO",
+    body: "Trump's second term launches high-profile mass interior enforcement sweeps. Aurora, CO becomes a symbolic flashpoint after Venezuelan migrants are targeted following viral social media claims about a gang takeover in the city. This sets precedent for urban enforcement escalation.",
+    admin: "Trump II"
+  },
+  {
+    lat: 25.77, lng: -80.19,
+    year: "2023", type: "expand",
+    title: "Florida SB 1718",
+    location: "Miami, FL",
+    body: "Florida's SB 1718, one of the nation's most sweeping state-level immigration laws, criminalizes transporting undocumented immigrants, invalidates foreign IDs, and mandates E-Verify for employers. Many migrants face mass self-deportation.",
+    admin: "Biden"
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COLOR SCALES
+// ─────────────────────────────────────────────────────────────────────────────
+const MAX_COUNT = 2649856;
+
+function choroplethColor(count) {
+  const t = Math.pow(count / MAX_COUNT, 0.35);
+  const stops = [
+    [200,232,160], [155,200,110], [117,178,75], [74,138,40], [42,90,16]
+  ];
+  const i = Math.min(Math.floor(t * (stops.length - 1)), stops.length - 2);
+  const frac = t * (stops.length - 1) - i;
+  const c = stops[i].map((v, j) => Math.round(v + frac * (stops[i+1][j] - v)));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+
+function bubbleRadius(count) {
+  return 6 + Math.pow(count / MAX_COUNT, 0.45) * 52;
+}
+
+const pinColors = { expand: '#e07034', restrict: '#5aaad4', crisis: '#d4a820' };
+const pinLabels = { expand: 'Enforcement Expansion', restrict: 'Restriction / Reform', crisis: 'Flashpoint' };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// MAP INIT
+// ─────────────────────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [38.5, -97.5],
+  zoom: 4,
+  zoomControl: true,
+  attributionControl: true,
+  minZoom: 3, maxZoom: 8,
+  maxBounds: [[15, -170], [72, -40]],
+  maxBoundsViscosity: 1.0
+});
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a>',
+  opacity: 0.45,
+  noWrap: true
+}).addTo(map);
+
+const bubbleGroup = L.layerGroup().addTo(map);
+const pinGroup    = L.layerGroup().addTo(map);
+
+// Bubbles: precise deportation count circles
+stateData.forEach(d => {
+  const pct = ((d.count / 5477711) * 100).toFixed(1);
+  const r = bubbleRadius(d.count);
+
+  const circle = L.circleMarker([d.lat, d.lng], {
+    radius: r,
+    fillColor: '#75b24b',
+    color: '#3a7220',
+    weight: 1,
+    fillOpacity: 0.55,
+    className: 'bubble-marker'
+  });
+
+  circle.bindPopup(`
+    <div class="popup-body">
+      <div class="popup-tag">State · 2003–2024</div>
+      <div class="popup-title">${d.state}</div>
+      <div class="popup-stat">
+        <span class="popup-stat-key">Total Deportations</span>
+        <span class="popup-stat-val">${d.count.toLocaleString()}</span>
+      </div>
+      <div class="popup-stat">
+        <span class="popup-stat-key">% of U.S. Total</span>
+        <span class="popup-stat-val">${pct}%</span>
+      </div>
+      <hr class="popup-divider">
+      <div class="popup-note">
+        Hover nearby turning-point pins for policy context specific to this region.
+      </div>
+    </div>
+  `, { maxWidth: 300 });
+
+  circle.on('mouseover', function() { this.openPopup(); });
+  bubbleGroup.addLayer(circle);
+});
+
+// ─── TURNING POINT PINS ───
+turningPoints.forEach(tp => {
+  const color = pinColors[tp.type];
+
+  // Diamond/pin shape via divIcon
+  const pinHtml = `
+    <div style="
+      width:18px; height:18px;
+      background:${color};
+      border:2px solid white;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      box-shadow: 2px 2px 4px rgba(0,0,0,0.4);
+    "></div>
+  `;
+
+  const icon = L.divIcon({
+    html: pinHtml,
+    className: '',
+    iconSize: [22, 22],
+    iconAnchor: [11, 20],
+    popupAnchor: [0, -22]
+  });
+
+  const marker = L.marker([tp.lat, tp.lng], { icon });
+
+  marker.bindPopup(`
+    <div class="popup-body">
+      <div class="popup-event-tag" style="background:${color}22;color:${color};border:1px solid ${color}55;">
+        ${tp.year} · ${pinLabels[tp.type]} · ${tp.admin}
+      </div>
+      <div class="popup-title">${tp.title}</div>
+      <div class="popup-stat">
+        <span class="popup-stat-key">Location</span>
+        <span class="popup-stat-val">${tp.location}</span>
+      </div>
+      <hr class="popup-divider">
+      <div class="popup-note">${tp.body}</div>
+    </div>
+  `, { maxWidth: 300 });
+
+  marker.on('mouseover', function() { this.openPopup(); });
+  pinGroup.addLayer(marker);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SIDEBAR STATE LIST
+// ─────────────────────────────────────────────────────────────────────────────
+const listEl = document.getElementById('state-list');
+const top12 = [...stateData].sort((a,b) => b.count - a.count).slice(0, 12);
+
+top12.forEach((d, i) => {
+  const pct = (d.count / MAX_COUNT) * 100;
+  const row = document.createElement('div');
+  row.className = 'state-row';
+  row.innerHTML = `
+    <span class="state-rank">${i+1}</span>
+    <span class="state-name">${d.state}</span>
+    <div class="state-bar-track">
+      <div class="state-bar-fill" style="width:${pct}%"></div>
+    </div>
+    <span class="state-val">${(d.count/1000).toFixed(0)}K</span>
+  `;
+  row.addEventListener('click', () => {
+    map.setView([d.lat, d.lng], 6, { animate: true });
+  });
+  listEl.appendChild(row);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYER TOGGLES
+// ─────────────────────────────────────────────────────────────────────────────
+document.getElementById('toggle-bubbles').addEventListener('change', function() {
+  this.checked ? map.addLayer(bubbleGroup) : map.removeLayer(bubbleGroup);
+});
+document.getElementById('toggle-pins').addEventListener('change', function() {
+  this.checked ? map.addLayer(pinGroup) : map.removeLayer(pinGroup);
+});
+</script>
+</body>
+</html>
