@@ -28,7 +28,7 @@ This visualization will be published on the forthcoming research website of the 
 
 ## Running locally
 
-Open `ice-deportations-map.html` in a browser. No build step — Leaflet and fonts load from CDN.
+Open downloaded `ice-deportations-map.html` in a browser. No build step — Leaflet and fonts load from CDN.
 
 ## Built with
 
