@@ -1,5 +1,7 @@
 # ICE Deportations by State, FY 2003–2024
 
+![ICE deportations map preview](preview.png)
+
 An interactive map of 5.47 million U.S. deportations over two decades, built with Leaflet.js. Each state is drawn as a circle scaled to its total removals, overlaid with 13 "turning point" pins marking the policy shifts and crises that shaped enforcement — from the 2006 Secure Border Initiative through Title 42, family separation, and the 2025 interior sweeps.
 
 **Live project site:** https://tuatara-hbrypn.my.canva.site/
